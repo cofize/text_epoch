@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Text Epoch — определитель эпохи</title>
+  <style>
+    :root{--bg:#f5f3ef;--paper:#fffefa;--ink:#252923;--muted:#77796f;--line:#e7e3da;--accent:#526b54;--accent2:#dce7d8;--gold:#b98b45;--shadow:0 18px 55px rgba(49,48,39,.08)}
+    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+    .shell{max-width:1040px;margin:0 auto;padding:34px 22px 70px}.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:62px}.brand{font-weight:750;letter-spacing:.13em;font-size:13px}.brand span{color:var(--accent)}.status{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:8px}.dot{width:7px;height:7px;background:#b98b45;border-radius:50%}
+    .hero{max-width:700px;margin-bottom:36px}.eyebrow{color:var(--accent);font-size:12px;font-weight:700;letter-spacing:.15em;text-transform:uppercase}.hero h1{font-family:Georgia,serif;font-size:clamp(42px,7vw,68px);font-weight:400;line-height:1.02;letter-spacing:-.045em;margin:14px 0 18px}.hero p{color:var(--muted);font-size:17px;max-width:590px;margin:0}
+    .panel{background:var(--paper);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow);padding:30px;margin-top:32px}.stephead{display:flex;align-items:center;gap:13px;margin-bottom:20px}.num{width:30px;height:30px;border-radius:50%;background:var(--accent2);color:var(--accent);display:grid;place-items:center;font-weight:750;font-size:13px}.stephead h2{font-size:19px;margin:0;font-weight:650}.hint{color:var(--muted);font-size:13px;margin:-10px 0 20px 43px}
+    .genres{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.genre{border:1px solid var(--line);border-radius:14px;padding:18px 16px;background:#fff;cursor:pointer;text-align:left;transition:.18s;color:var(--ink);min-height:115px}.genre:hover{border-color:#a9b9a5;transform:translateY(-1px)}.genre.active{border:1.5px solid var(--accent);background:#f2f6ef;box-shadow:inset 0 0 0 1px var(--accent)}.genre strong{display:block;font-size:17px;margin-bottom:5px}.genre small{display:block;color:var(--muted);line-height:1.4}.genre .glyph{font-size:20px;margin-bottom:10px;display:block}
+    .textwrap{margin-top:30px}.textarea-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}.textarea-head label{font-weight:650}.counter{font-size:12px;color:var(--muted)}textarea{width:100%;min-height:210px;resize:vertical;border:1px solid var(--line);border-radius:13px;padding:17px 18px;font:16px/1.65 Georgia,serif;background:#fff;color:var(--ink);outline:none}textarea:focus{border-color:#9eae98;box-shadow:0 0 0 3px #e9efe6}textarea::placeholder{color:#aaa99f}.footnote{font-size:12px;color:var(--muted);margin-top:8px}
+    .actions{display:flex;align-items:center;gap:14px;margin-top:22px}.primary{border:0;border-radius:999px;padding:14px 24px;background:var(--accent);color:white;font-size:14px;font-weight:700;cursor:pointer;transition:.18s}.primary:hover{background:#405a43}.primary:disabled{opacity:.45;cursor:not-allowed}.reset{border:0;background:none;color:var(--muted);cursor:pointer;font-size:13px}.error{color:#a34d3d;font-size:13px;margin-top:12px;display:none}
+    .result{display:none;margin-top:22px}.result.show{display:block}.resulttop{display:flex;align-items:flex-start;justify-content:space-between;gap:20px}.result h2{font:400 30px/1.15 Georgia,serif;margin:5px 0 8px}.result .sub{font-size:13px;color:var(--muted)}.tag{border-radius:999px;background:#f4ead8;color:#8a642c;padding:7px 11px;font-size:11px;font-weight:700;white-space:nowrap}.period{font:400 clamp(34px,6vw,54px)/1 Georgia,serif;letter-spacing:-.04em;margin:18px 0 8px}.period.none{font-size:25px;letter-spacing:0}.confidence{font-size:13px;color:var(--muted)}.barlist{margin-top:24px;display:grid;gap:12px}.barrow{display:grid;grid-template-columns:112px 1fr 44px;gap:12px;align-items:center;font-size:12px}.bartrack{height:7px;background:#eeece6;border-radius:99px;overflow:hidden}.barfill{height:100%;background:#80967c;border-radius:99px}.barrow .value{text-align:right;color:var(--muted);font-variant-numeric:tabular-nums}.markers{margin-top:28px;border-top:1px solid var(--line);padding-top:20px}.markers h3{font-size:15px;margin:0 0 5px}.markers p{font-size:12px;color:var(--muted);margin:0 0 13px}.chips{display:flex;flex-wrap:wrap;gap:8px}.chip{background:#f0f2eb;border:1px solid #e1e6db;color:#455a43;padding:6px 10px;border-radius:8px;font-size:12px}.chip small{color:#899184;margin-left:5px}.empty{color:var(--muted);font-size:13px}.disclaimer{border-left:2px solid var(--gold);padding:10px 13px;background:#faf6ee;color:#75674f;font-size:12px;margin-top:24px}.footer{text-align:center;color:#99978e;font-size:11px;margin-top:28px}
+    @media(max-width:650px){.shell{padding:22px 14px 45px}.top{margin-bottom:42px}.panel{padding:20px 16px}.genres{grid-template-columns:1fr}.genre{min-height:0}.genre .glyph{display:inline;margin-right:8px}.resulttop{display:block}.tag{display:inline-block;margin-top:12px}.barrow{grid-template-columns:90px 1fr 38px}}
+  </style>
+</head>
+<body>
+<div class="shell">
+  <header class="top"><div class="brand">TEXT <span>EPOCH</span></div><div class="status"><i class="dot"></i> демо-версия · анализ по маркерам</div></header>
+  <section class="hero"><div class="eyebrow">Лингвистический анализ текста</div><h1>Когда был<br>написан текст?</h1><p>Выберите жанр, добавьте фрагмент русского текста — сервис найдёт характерные маркеры и покажет, к какому периоду они отсылают.</p></section>
+
+  <main class="panel">
+    <div class="stephead"><span class="num">1</span><h2>Сначала определим жанр</h2></div>
+    <p class="hint">Выберите жанр вручную — для него будет использован соответствующий словарь маркеров.</p>
+    <div class="genres" role="group" aria-label="Жанр текста">
+      <button class="genre" data-genre="поэзия"><span class="glyph">✳</span><strong>Поэзия</strong><small>Стихотворения и поэтические тексты</small></button>
+      <button class="genre" data-genre="проза"><span class="glyph">▤</span><strong>Проза</strong><small>Художественная проза и повествование</small></button>
+      <button class="genre" data-genre="публицистика"><span class="glyph">¶</span><strong>Публицистика</strong><small>Статьи, очерки и общественные тексты</small></button>
+    </div>
+
+    <div class="textwrap">
+      <div class="stephead"><span class="num">2</span><h2>Теперь добавим текст</h2></div>
+      <div class="textarea-head"><label for="sourceText">Фрагмент для анализа</label><span class="counter" id="counter">0 / 10 000</span></div>
+      <textarea id="sourceText" maxlength="10000" placeholder="Вставьте сюда фрагмент текста на русском языке…"></textarea>
+      <div class="footnote">Минимум 50 символов. Позиции найденных маркеров считаются в исходном тексте.</div>
+      <div class="actions"><button class="primary" id="analyzeBtn" disabled>Определить период <span aria-hidden="true">↗</span></button><button class="reset" id="resetBtn">Очистить</button></div>
+      <div class="error" id="error"></div>
+    </div>
+  </main>
+
+  <section class="panel result" id="result" aria-live="polite">
+    <div class="resulttop"><div><div class="eyebrow">Результат анализа</div><h2 id="resultGenre">Проза</h2><div class="sub">Жанр выбран пользователем · датировка рассчитана по словарю этого жанра</div></div><span class="tag">ЗАГЛУШКА · НЕ НЕЙРОСЕТЬ</span></div>
+    <div class="period" id="period">1850–1899</div><div class="confidence" id="confidence"></div>
+    <div class="barlist" id="bars"></div>
+    <div class="markers"><h3>Найденные маркеры</h3><p id="markerCaption"></p><div class="chips" id="chips"></div></div>
+    <div class="disclaimer">Результат демонстрационный: сейчас сервис сопоставляет слова с подготовленными жанровыми словарями. Это не предсказание обученной нейросети и не окончательная датировка произведения.</div>
+  </section>
+  <div class="footer">TEXT EPOCH · исследовательский прототип</div>
+</div>
+<script>
+  const genreButtons = [...document.querySelectorAll('.genre')];
+  const textArea = document.getElementById('sourceText');
+  const analyzeBtn = document.getElementById('analyzeBtn');
+  const errorBox = document.getElementById('error');
+  let selectedGenre = null;
+  genreButtons.forEach(button => button.addEventListener('click', () => {
+    selectedGenre = button.dataset.genre;
+    genreButtons.forEach(item => item.classList.toggle('active', item === button));
+    validate();
+  }));
+  textArea.addEventListener('input', () => {
+    document.getElementById('counter').textContent = `${textArea.value.length.toLocaleString('ru-RU')} / 10 000`;
+    validate();
+  });
+  function validate(){ analyzeBtn.disabled = !(selectedGenre && textArea.value.trim().length >= 50 && textArea.value.length <= 10000); }
+  function escapeHtml(value){return value.replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));}
+  const labels = {'1800-1849':'1800–1849','1850-1899':'1850–1899','1900-1924':'1900–1924','1925-1944':'1925–1944'};
+  const genreNames = {'поэзия':'Поэзия','проза':'Проза','публицистика':'Публицистика'};
+  analyzeBtn.addEventListener('click', async () => {
+    errorBox.style.display = 'none'; analyzeBtn.disabled = true; analyzeBtn.textContent = 'Анализируем…';
+    try {
+      const response = await fetch('/api/analyze', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({genre:selectedGenre,text:textArea.value})});
+      const payload = await response.json();
+      if(!response.ok) throw new Error(payload.detail || payload.message || 'Не удалось выполнить анализ');
+      render(payload.result);
+    } catch(error){ errorBox.textContent = error.message; errorBox.style.display = 'block'; }
+    finally { analyzeBtn.innerHTML = 'Определить период <span aria-hidden="true">↗</span>'; validate(); }
+  });
+  function render(data){
+    const section = document.getElementById('result'); section.classList.add('show');
+    document.getElementById('resultGenre').textContent = genreNames[data.genre] || data.genre;
+    const period = document.getElementById('period');
+    period.textContent = data.period ? labels[data.period] || data.period : 'Период не определён';
+    period.classList.toggle('none', !data.period);
+    document.getElementById('confidence').textContent = data.period ? `Доля найденных маркерных свидетельств в пользу периода: ${(data.score*100).toFixed(1)}%` : (data.message || 'В словаре выбранного жанра не нашлось совпадений.');
+    const counts = data.marker_counts_by_period || {};
+    document.getElementById('bars').innerHTML = Object.keys(labels).map(key => {
+      const count = counts[key] || 0; const total = Math.max(1, ...Object.values(counts));
+      return `<div class="barrow"><span>${labels[key]}</span><div class="bartrack"><div class="barfill" style="width:${count/total*100}%"></div></div><span class="value">${count}</span></div>`;
+    }).join('');
+    const markers = data.dated_markers || [];
+    document.getElementById('markerCaption').textContent = `Совпадений показано: ${markers.length}${data.markers_found > markers.length ? ` (первые ${markers.length})` : ''}.`;
+    document.getElementById('chips').innerHTML = markers.length ? markers.map(m => `<span class="chip" title="Позиция ${m.start}–${m.end}">${escapeHtml(m.text)}<small>${labels[m.points_to] || m.points_to}</small></span>`).join('') : '<span class="empty">Маркеры не найдены.</span>';
+    section.scrollIntoView({behavior:'smooth',block:'start'});
+  }
+  document.getElementById('resetBtn').addEventListener('click', () => {
+    textArea.value=''; selectedGenre=null; genreButtons.forEach(item=>item.classList.remove('active'));
+    document.getElementById('counter').textContent='0 / 10 000'; document.getElementById('result').classList.remove('show'); errorBox.style.display='none'; validate();
+  });
+</script>
+</body>
+</html>
