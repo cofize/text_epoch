@@ -18,8 +18,8 @@
 Зависит только от pandas и lxml. Дамп читается потоком, память почти не растёт.
 
 Запуск:
-  python 02_extract.py --dump ruwikisource-pages-articles.xml.bz2 \
-      --selected selected.csv --out fragments.jsonl
+python 02_extract.py --dump ruwikisource.xml.bz2 --selected selected.csv --out fragments.jsonl
+
 """
 import argparse
 import bz2
@@ -106,9 +106,13 @@ def clean_wikitext(raw):
 SENT_SPLIT = re.compile(
     r"(?:(?<=[.!?…])|(?<=[.!?…][\"»”)\]]))\s+"
     r"(?=[\"«“(\[—–-]*[А-ЯЁA-Z0-9])")
-TARGET = {"поэзия": 40}          # слов во фрагменте; для остальных жанров 70
-DEFAULT_TARGET = 70
-MIN_WORDS, MAX_WORDS = 25, 220
+# длина фрагмента в СИМВОЛАХ
+TARGET_CHARS = {"поэзия": 800}
+DEFAULT_TARGET_CHARS = 1800
+MIN_CHARS = {"поэзия": 300}
+DEFAULT_MIN_CHARS = 1000
+MAX_CHARS = {"поэзия": 1500}
+DEFAULT_MAX_CHARS = 3000
 
 
 def n_words(s):
@@ -124,28 +128,29 @@ def split_units(text, genre):
     return units, " "
 
 
-def pack(units, joiner, target):
-    out, cur, words = [], [], 0
+def pack(units, joiner, target, min_chars):
+    out, cur, size = [], [], 0
     for u in units:
         cur.append(u)
-        words += n_words(u)
-        if words >= target:
+        size += len(u) + 1
+        if size >= target:
             out.append(joiner.join(cur))
-            cur, words = [], 0
-    if cur and words >= MIN_WORDS:
+            cur, size = [], 0
+    if cur and size >= min_chars:
         out.append(joiner.join(cur))
     return out
 
 
-def good(fragment):
-    nw = n_words(fragment)
-    if not (MIN_WORDS <= nw <= MAX_WORDS):
+def good(fragment, genre):
+    n = len(fragment)
+    if not (MIN_CHARS.get(genre, DEFAULT_MIN_CHARS) <= n
+            <= MAX_CHARS.get(genre, DEFAULT_MAX_CHARS)):
         return False
     letters = re.findall(r"[A-Za-zА-Яа-яЁё]", fragment)
     if not letters:
         return False
     cyr_share = sum(1 for c in letters if RE_CYR.match(c)) / len(letters)
-    digit_share = sum(c.isdigit() for c in fragment) / len(fragment)
+    digit_share = sum(c.isdigit() for c in fragment) / n
     return cyr_share >= 0.9 and digit_share < 0.05
 
 
@@ -154,8 +159,10 @@ def make_fragments(raw, genre, rnd, per_page):
     old = bool(OLD_ORTH.search(text))
     text = normalize_orth(text)
     units, joiner = split_units(text, genre)
-    frags = [f for f in pack(units, joiner, TARGET.get(genre, DEFAULT_TARGET))
-             if good(f)]
+    frags = [f for f in pack(units, joiner,
+                             TARGET_CHARS.get(genre, DEFAULT_TARGET_CHARS),
+                             MIN_CHARS.get(genre, DEFAULT_MIN_CHARS))
+             if good(f, genre)]
     if len(frags) > per_page:
         frags = rnd.sample(frags, per_page)
     return frags, old
