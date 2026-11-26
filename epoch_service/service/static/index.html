@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Определитель эпохи</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&display=swap">
+<link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+<header class="top">
+  <h1>Определитель эпохи</h1>
+  <p>Сначала сервис определяет жанр текста, затем эпоху внутри этого жанра. Слова, на которые опирается ответ, подсвечены в тексте.</p>
+</header>
+
+<div id="notices" class="notices"></div>
+
+<main class="layout">
+  <section class="work" aria-labelledby="text-label">
+    <div class="field-head">
+      <label id="text-label" for="text">Текст</label>
+      <span id="count" class="muted">0 / 10 000</span>
+    </div>
+    <textarea id="text" spellcheck="false" placeholder="Вставьте русский текст: от 50 до 10 000 символов. Надёжнее всего работают отрывки от 1000 символов."></textarea>
+    <div id="viewer" class="viewer" role="region" aria-label="Текст с подсветкой маркеров" tabindex="0" hidden></div>
+    <p id="inspector" class="inspector" aria-live="polite" hidden></p>
+
+    <p id="error" class="error" role="alert" hidden></p>
+
+    <div class="actions">
+      <button id="go" class="primary" type="button">Определить</button>
+      <button id="edit" type="button" hidden>Изменить текст</button>
+      <button id="clear" type="button">Очистить</button>
+      <span class="examples">Пример:
+        <button class="link" type="button" data-ex="prose">проза</button>
+        <button class="link" type="button" data-ex="poetry">стихи</button>
+        <button class="link" type="button" data-ex="publicism">публицистика</button>
+      </span>
+    </div>
+  </section>
+
+  <div class="side">
+  <section class="genre-block" aria-labelledby="genre-label">
+    <h2 id="genre-label">Жанр текста <span class="muted">можно не выбирать</span></h2>
+    <div id="genre-pick" class="genres" role="group" aria-labelledby="genre-label"></div>
+    <p class="hint">Если жанр не выбран, сервис определит его сам. Повторный клик по выбранному жанру снимает выбор.</p>
+  </section>
+
+  <aside class="key" aria-label="Результат" aria-live="polite">
+    <p id="empty" class="empty">Здесь появятся жанр, эпоха и слова-маркеры.</p>
+    <div id="result" hidden>
+      <ul id="warnings" class="warnings"></ul>
+      <section class="step n1">
+        <h2>Жанр</h2>
+        <p class="verdict"><strong id="genre-word"></strong> <span id="genre-conf" class="muted"></span></p>
+        <ul id="genre-bars" class="bars"></ul>
+      </section>
+      <section class="step n2">
+        <h2 id="era-title">Эпоха</h2>
+        <p class="verdict"><strong id="era-word"></strong> <span id="era-conf" class="muted"></span></p>
+        <ul id="era-bars" class="bars strata"></ul>
+      </section>
+      <section class="step evidence">
+        <h2>Слова-маркеры</h2>
+        <p id="marker-note" class="muted"></p>
+        <ul id="chips" class="chips"></ul>
+      </section>
+    </div>
+  </aside>
+  </div>
+</main>
+
+<script src="/static/app.js"></script>
+</body>
+</html>

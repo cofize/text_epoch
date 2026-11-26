@@ -1,0 +1,2 @@
+# Для запуска зависимостей нет (только стандартная библиотека Python 3.10+).
+# Для продакшена: pip install gunicorn  ->  gunicorn service.wsgi:application
