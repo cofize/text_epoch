@@ -19,12 +19,12 @@
 </head>
 <body>
 <div class="shell">
-  <header class="top"><div class="brand">TEXT <span>EPOCH</span></div><div class="status"><i class="dot"></i> демо-версия · анализ по маркерам</div></header>
-  <section class="hero"><div class="eyebrow">Лингвистический анализ текста</div><h1>Когда был<br>написан текст?</h1><p>Выберите жанр, добавьте фрагмент русского текста — сервис найдёт характерные маркеры и покажет, к какому периоду они отсылают.</p></section>
+  <header class="top"><div class="brand">TEXT <span>EPOCH</span></div><div class="status"><i class="dot"></i> исследовательский прототип · модель + маркеры</div></header>
+  <section class="hero"><div class="eyebrow">Лингвистический анализ текста</div><h1>Когда был<br>написан текст?</h1><p>Добавьте фрагмент русского текста — модель определит жанр и период, а сервис покажет найденные характерные маркеры.</p></section>
 
   <main class="panel">
-    <div class="stephead"><span class="num">1</span><h2>Сначала определим жанр</h2></div>
-    <p class="hint">Выберите жанр вручную — для него будет использован соответствующий словарь маркеров.</p>
+    <div class="stephead"><span class="num">1</span><h2>Жанр (необязательно)</h2></div>
+    <p class="hint">Жанр можно не выбирать — его определит модель. Если выбрать вручную, модель использует его; повторный клик снимает выбор.</p>
     <div class="genres" role="group" aria-label="Жанр текста">
       <button class="genre" data-genre="поэзия"><span class="glyph">✳</span><strong>Поэзия</strong><small>Стихотворения и поэтические тексты</small></button>
       <button class="genre" data-genre="проза"><span class="glyph">▤</span><strong>Проза</strong><small>Художественная проза и повествование</small></button>
@@ -42,11 +42,11 @@
   </main>
 
   <section class="panel result" id="result" aria-live="polite">
-    <div class="resulttop"><div><div class="eyebrow">Результат анализа</div><h2 id="resultGenre">Проза</h2><div class="sub">Жанр выбран пользователем · датировка рассчитана по словарю этого жанра</div></div><span class="tag">ЗАГЛУШКА · НЕ НЕЙРОСЕТЬ</span></div>
+    <div class="resulttop"><div><div class="eyebrow">Результат анализа</div><h2 id="resultGenre">Проза</h2><div class="sub" id="resultSub">Жанр выбран пользователем</div></div><span class="tag" id="modelTag">МОДЕЛЬ</span></div>
     <div class="period" id="period">1850–1899</div><div class="confidence" id="confidence"></div>
     <div class="barlist" id="bars"></div>
     <div class="markers"><h3>Найденные маркеры</h3><p id="markerCaption"></p><div class="chips" id="chips"></div></div>
-    <div class="disclaimer">Результат демонстрационный: сейчас сервис сопоставляет слова с подготовленными жанровыми словарями. Это не предсказание обученной нейросети и не окончательная датировка произведения.</div>
+    <div class="disclaimer" id="disclaimer">Результат — оценка обученной модели, а не окончательная датировка произведения. Найденные маркеры показаны для наглядности и сами по себе период не определяют.</div>
   </section>
   <div class="footer">TEXT EPOCH · исследовательский прототип</div>
 </div>
@@ -57,22 +57,23 @@
   const errorBox = document.getElementById('error');
   let selectedGenre = null;
   genreButtons.forEach(button => button.addEventListener('click', () => {
-    selectedGenre = button.dataset.genre;
-    genreButtons.forEach(item => item.classList.toggle('active', item === button));
+    selectedGenre = (selectedGenre === button.dataset.genre) ? null : button.dataset.genre;
+    genreButtons.forEach(item => item.classList.toggle('active', item.dataset.genre === selectedGenre));
     validate();
   }));
   textArea.addEventListener('input', () => {
     document.getElementById('counter').textContent = `${textArea.value.length.toLocaleString('ru-RU')} / 10 000`;
     validate();
   });
-  function validate(){ analyzeBtn.disabled = !(selectedGenre && textArea.value.trim().length >= 50 && textArea.value.length <= 10000); }
+  function validate(){ analyzeBtn.disabled = !(textArea.value.trim().length >= 50 && textArea.value.length <= 10000); }
   function escapeHtml(value){return value.replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));}
-  const labels = {'1800-1849':'1800–1849','1850-1899':'1850–1899','1900-1924':'1900–1924','1925-1944':'1925–1944'};
+  const fmt = k => String(k).replace('-', '–');
+  const labels = {'1800-1849':'1800–1849','1850-1899':'1850–1899','1900-1924':'1900–1924','1925-1944':'1925–1944'}; // периоды словарей (для подписей маркеров)
   const genreNames = {'поэзия':'Поэзия','проза':'Проза','публицистика':'Публицистика'};
   analyzeBtn.addEventListener('click', async () => {
     errorBox.style.display = 'none'; analyzeBtn.disabled = true; analyzeBtn.textContent = 'Анализируем…';
     try {
-      const response = await fetch('/api/analyze', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({genre:selectedGenre,text:textArea.value})});
+      const response = await fetch('/api/analyze', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({genre:selectedGenre || 'auto',text:textArea.value})});
       const payload = await response.json();
       if(!response.ok) throw new Error(payload.detail || payload.message || 'Не удалось выполнить анализ');
       render(payload.result);
@@ -83,17 +84,25 @@
     const section = document.getElementById('result'); section.classList.add('show');
     document.getElementById('resultGenre').textContent = genreNames[data.genre] || data.genre;
     const period = document.getElementById('period');
-    period.textContent = data.period ? labels[data.period] || data.period : 'Период не определён';
+    period.textContent = data.period ? fmt(data.period) : 'Период не определён';
     period.classList.toggle('none', !data.period);
-    document.getElementById('confidence').textContent = data.period ? `Доля найденных маркерных свидетельств в пользу периода: ${(data.score*100).toFixed(1)}%` : (data.message || 'В словаре выбранного жанра не нашлось совпадений.');
-    const counts = data.marker_counts_by_period || {};
-    document.getElementById('bars').innerHTML = Object.keys(labels).map(key => {
-      const count = counts[key] || 0; const total = Math.max(1, ...Object.values(counts));
-      return `<div class="barrow"><span>${labels[key]}</span><div class="bartrack"><div class="barfill" style="width:${count/total*100}%"></div></div><span class="value">${count}</span></div>`;
-    }).join('');
+    const isModel = data.stub === false;
+    document.getElementById('modelTag').textContent = isModel ? 'МОДЕЛЬ · ' + (data.model_version || '') : 'ЗАГЛУШКА · НЕ НЕЙРОСЕТЬ';
+    document.getElementById('resultSub').textContent = data.genre_source === 'model' ? `Жанр определён моделью (${(data.genre_score*100).toFixed(0)}%)` : 'Жанр выбран пользователем';
+    document.getElementById('disclaimer').style.display = 'block';
+    document.getElementById('confidence').textContent = data.period ? (isModel ? `Вероятность периода по модели: ${(data.score*100).toFixed(1)}%` : `Доля найденных маркерных свидетельств в пользу периода: ${(data.score*100).toFixed(1)}%`) : (data.message || 'Не удалось определить период.');
+    let rows;
+    if (isModel && data.era_probs) {
+      rows = Object.entries(data.era_probs).map(([k,v]) => [fmt(k), v/Math.max(1e-9,...Object.values(data.era_probs))*100, (v*100).toFixed(1)+'%']);
+    } else {
+      const counts = data.marker_counts_by_period || {}; const total = Math.max(1, ...Object.values(counts));
+      rows = Object.keys(labels).map(k => [labels[k], (counts[k]||0)/total*100, counts[k]||0]);
+    }
+    document.getElementById('bars').innerHTML = rows.map(([name,w,val]) =>
+      `<div class="barrow"><span>${name}</span><div class="bartrack"><div class="barfill" style="width:${w}%"></div></div><span class="value">${val}</span></div>`).join('');
     const markers = data.dated_markers || [];
     document.getElementById('markerCaption').textContent = `Совпадений показано: ${markers.length}${data.markers_found > markers.length ? ` (первые ${markers.length})` : ''}.`;
-    document.getElementById('chips').innerHTML = markers.length ? markers.map(m => `<span class="chip" title="Позиция ${m.start}–${m.end}">${escapeHtml(m.text)}<small>${labels[m.points_to] || m.points_to}</small></span>`).join('') : '<span class="empty">Маркеры не найдены.</span>';
+    document.getElementById('chips').innerHTML = markers.length ? markers.map(m => `<span class="chip" title="Позиция ${m.start}–${m.end}">${escapeHtml(m.text)}<small>${labels[m.points_to] || fmt(m.points_to)}</small></span>`).join('') : '<span class="empty">Маркеры не найдены.</span>';
     section.scrollIntoView({behavior:'smooth',block:'start'});
   }
   document.getElementById('resetBtn').addEventListener('click', () => {

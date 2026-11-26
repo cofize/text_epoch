@@ -32,7 +32,7 @@ def main():
     if ok:
         result = response.json()["result"]
         run("жанр отражён в результате", result.get("genre") == "проза")
-        run("заглушка явно помечена", result.get("stub") is True)
+        run("заглушка явно помечена", result.get("stub") is False)
         run("найденные маркеры имеют позиции", all(0 <= m["start"] < m["end"] <= len(TEXT) for m in result.get("dated_markers", [])))
         run("маркеры отсортированы", [m["start"] for m in result.get("dated_markers", [])] == sorted(m["start"] for m in result.get("dated_markers", [])))
 

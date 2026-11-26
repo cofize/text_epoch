@@ -1,0 +1,4 @@
+fastAPI_WEB/model_run/
+fastAPI_WEB/.venv/
+__pycache__/
+*.pyc

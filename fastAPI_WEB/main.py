@@ -7,11 +7,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
-from nlp import GENRE_FILES, analyze
+from nlp import GENRE_FILES
+from model_adapter import analyze, status
 
 app = FastAPI(
     title="Text Epoch — определитель периода текста",
-    description="Демонстрационный сервис датировки русского текста по жанровым маркерам. Сейчас используется заглушка.",
     version="0.2.0",
 )
 app.add_middleware(
@@ -27,7 +27,7 @@ INDEX = Path(__file__).parent / "static" / "index.html"
 
 
 class AnalyzeIn(BaseModel):
-    genre: str = Field(min_length=1)
+    genre: str = "auto"          # "auto" - жанр определит модель
     text: str = Field(min_length=50, max_length=10000)
 
 
@@ -60,7 +60,7 @@ def analyze_text(item: AnalyzeIn):
 
 @app.get("/api/health")
 def health():
-    return {"status": "ok", "requests": REQUESTS, "analyzer": "markers-stub"}
+    return {"status": "ok", "requests": REQUESTS, "analyzer": status()}
 
 
 @app.get("/api/history")
